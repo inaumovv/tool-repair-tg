@@ -11,7 +11,8 @@ router: Router = Router()
 @router.message(F.text == 'Новый заказ')
 async def start_add_order(message: Message, state: FSMContext, keyboard: Keyboard = Keyboard):
     await state.set_state(AddToolStates.photo)
-    await state.update_data(tools=[None])
+    data = await state.get_data()
+    await state.update_data(tools=data['tools']) if data['tools'] else await state.update_data(tools=[None])
     await message.answer('Отправьте фото инструмента', reply_markup=keyboard.cancel_keyboard())
 
 
@@ -33,6 +34,40 @@ async def get_photo(message: Message, state: FSMContext):
 async def set_tool_name(message: Message, state: FSMContext, keyboard: Keyboard = Keyboard):
     data: dict = await state.get_data()
     tools: list = data['tools']
-    tools[-1]['name'] = message.text
+    tools[-1]['tool_name'] = message.text
     await state.update_data(tools=tools)
     await state.set_state(AddToolStates.select_option)
+
+    await message.answer(
+        text=('Нажмите на кнопку "Добавить инструмент" чтобы добавить еще 1 инструмент'
+              'Нажмите на кнопку "Далее" чтобы продолжить создание заказа'
+              'Нажмите на кнопку "Отмена" чтобы отменить создание заказа'),
+        reply_markup=keyboard.select_option_keyboard()
+    )
+
+
+@router.message(AddToolStates.select_option, F.text == 'Добавить инструмент')
+async def add_tool(message: Message, state: FSMContext):
+    await start_add_order(message, state)
+
+
+@router.message(AddToolStates.select_option, F.text == 'Далее')
+async def start_add_client_data(message: Message, state: FSMContext, keyboard: Keyboard = Keyboard):
+    await state.set_state(AddToolStates.client_name)
+    await message.answer('Отправьте имя и фамилию клиента', reply_markup=keyboard.cancel_keyboard())
+
+
+@router.message(AddToolStates.client_name, F.text)
+async def get_client_name(message: Message, state: FSMContext):
+    data: dict = await state.get_data()
+    data['client_name'] = message.text
+    await state.update_data(**data)
+    await state.set_state(AddToolStates.phone_number)
+    await message.answer('Отправьте номер телефона клиента в формате +7 (XXX) XXX XX')
+
+
+@router.message(AddToolStates.phone_number, F.text)
+async def get_phone_number(message: Message, state: FSMContext, keyboard: Keyboard = Keyboard):
+    data: dict = await state.get_data()
+    data['phone_number'] = message.text
+

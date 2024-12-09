@@ -22,3 +22,14 @@ class Keyboard:
                 [KeyboardButton(text='Отмена')]
             ]
         )
+
+    @classmethod
+    def select_option_keyboard(cls) -> ReplyKeyboardMarkup:
+        return ReplyKeyboardMarkup(
+            resize_keyboard=True,
+            keyboard=[
+                [KeyboardButton(text='Добавить инструмент')],
+                [KeyboardButton(text='Далее')],
+                [KeyboardButton(text='Отмена')]
+            ]
+        )

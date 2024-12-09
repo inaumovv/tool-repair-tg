@@ -13,6 +13,7 @@ class Status(enum.Enum):
     DIAGNOSTICS = "diagnostics"
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
+    CANCELLED = "cancelled"
 
 
 class Client(Base):
