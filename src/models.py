@@ -1,19 +1,20 @@
 import enum
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 
 from sqlalchemy import String, TIMESTAMP, func, Enum, ForeignKey, text
 from sqlalchemy.orm import Mapped, MappedColumn, relationship
 
-from src.database import Base
+from database import Base
 
 
 class Status(enum.Enum):
-    IN_QUEUE = "in_queue"
-    DIAGNOSTICS = "diagnostics"
-    IN_PROGRESS = "in_progress"
-    COMPLETED = "completed"
-    CANCELLED = "cancelled"
+    IN_QUEUE = "В очереди"
+    DIAGNOSTICS = "Диагностика"
+    DIAGNOSTICS_COMPLETED = "Диагностика закончена"
+    IN_PROGRESS = "В процессе"
+    COMPLETED = "Выполнен"
+    CANCELLED = "Отменен"
 
 
 class Client(Base):
@@ -32,6 +33,8 @@ class Order(Base):
 
     id: Mapped[int] = MappedColumn(primary_key=True)
     status: Mapped[Status]
+    price: Mapped[Optional[int]]
+    deadline: Mapped[Optional[datetime]]
     client_id: Mapped[int] = MappedColumn(ForeignKey('client.id'))
     client: Mapped['Client'] = relationship(back_populates='orders')
     tools: Mapped[List['Tool']] = relationship(back_populates='order')

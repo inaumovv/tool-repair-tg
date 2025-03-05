@@ -1,11 +1,12 @@
-from typing import Any, Generic, TypeVar
+from typing import Any, Generic, TypeVar, List, Dict, Sequence
 
 from pydantic import BaseModel
-from sqlalchemy import delete, insert, select, update
+from sqlalchemy import delete, insert, select, update, Row, RowMapping, Select, Result
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm.strategy_options import _AbstractLoad
 
-from src.database import Base
+from database import Base
 
 ModelType = TypeVar("ModelType", bound=Base)
 CreateSchemaType = TypeVar("CreateSchemaType", bound=BaseModel)
@@ -13,12 +14,20 @@ UpdateSchemaType = TypeVar("UpdateSchemaType", bound=BaseModel)
 
 
 class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
-    model: Base = None
+    model = None
 
     @classmethod
-    async def get_one_or_none(cls, session: AsyncSession, *filter, **filter_by) -> ModelType | None:
-        query = select(cls.model).filter(*filter).filter_by(**filter_by)
-        result = await session.execute(query)
+    async def get_one_or_none(
+            cls,
+            session: AsyncSession,
+            options: tuple | _AbstractLoad | None = None,
+            *filter,
+            **filter_by
+    ) -> ModelType | None:
+        query: Select = select(cls.model).filter(*filter).filter_by(**filter_by)
+        if options:
+            query = query.options(*options) if type(options) is tuple else query.options(options)
+        result: Result = await session.execute(query)
         return result.scalars().one_or_none()
 
     @classmethod
@@ -37,7 +46,8 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             statement = insert(cls.model).values(**create_data).returning(cls.model)
             result = await session.execute(statement)
             return result.scalars().first()
-        except (SQLAlchemyError, Exception):
+        except (SQLAlchemyError, Exception) as e:
+            print(e)
             return None
 
     @classmethod
@@ -55,3 +65,14 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         statement = update(cls.model).where(*where).values(**update_data).returning(cls.model)
         result = await session.execute(statement)
         return result.scalars().one()
+
+    @classmethod
+    async def add_bulk(cls, session: AsyncSession, data: List[Dict[str, Any]]):
+        try:
+            result = await session.execute(
+                insert(cls.model).returning(cls.model),
+                data
+            )
+            return result.scalars().all()
+        except (SQLAlchemyError, Exception):
+            return None

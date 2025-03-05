@@ -3,7 +3,7 @@ from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
-from src.bot.helpers.keyboard import Keyboard
+from telegram_bot.helpers.keyboard import Keyboard
 
 router: Router = Router()
 

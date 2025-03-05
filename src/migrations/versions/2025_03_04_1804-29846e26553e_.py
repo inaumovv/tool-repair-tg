@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 5837ff573f39
+Revision ID: 29846e26553e
 Revises: 
-Create Date: 2024-12-02 02:18:13.575697
+Create Date: 2025-03-04 18:04:39.459131
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '5837ff573f39'
+revision: str = '29846e26553e'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -30,7 +30,9 @@ def upgrade() -> None:
     )
     op.create_table('order',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('status', sa.Enum('IN_QUEUE', 'DIAGNOSTICS', 'IN_PROGRESS', 'COMPLETED', name='status'), nullable=False),
+    sa.Column('status', sa.Enum('IN_QUEUE', 'DIAGNOSTICS', 'DIAGNOSTICS_COMPLETED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED', name='status'), nullable=False),
+    sa.Column('price', sa.Integer(), nullable=True),
+    sa.Column('deadline', sa.DateTime(), nullable=True),
     sa.Column('client_id', sa.Integer(), nullable=False),
     sa.Column('created_at', sa.DateTime(), server_default=sa.text("TIMEZONE('utc', now())"), nullable=False),
     sa.Column('updated_at', sa.DateTime(), server_default=sa.text("TIMEZONE('utc', now())"), nullable=False),

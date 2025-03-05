@@ -8,9 +8,8 @@ class Keyboard:
         return ReplyKeyboardMarkup(
             resize_keyboard=True,
             keyboard=[
-                [KeyboardButton(text='Найти заказ')],
-                [KeyboardButton(text='Сменить статус ремонта'), KeyboardButton(text='Новый заказ')],
-                [KeyboardButton(text='Отменить ремонт')]
+                [KeyboardButton(text='Найти ремонт')],
+                [KeyboardButton(text='Сменить статус ремонта'), KeyboardButton(text='Новый ремонт')],
             ]
         )
 
@@ -30,6 +29,18 @@ class Keyboard:
             keyboard=[
                 [KeyboardButton(text='Добавить инструмент')],
                 [KeyboardButton(text='Далее')],
+                [KeyboardButton(text='Отмена')]
+            ]
+        )
+
+    @classmethod
+    def statuses_keyboard(cls) -> ReplyKeyboardMarkup:
+        return ReplyKeyboardMarkup(
+            resize_keyboard=True,
+            keyboard=[
+                [KeyboardButton(text='Диагностика'), KeyboardButton(text='Диагностика закончена')],
+                [KeyboardButton(text='В процессе')],
+                [KeyboardButton(text='Завершен')],
                 [KeyboardButton(text='Отмена')]
             ]
         )
