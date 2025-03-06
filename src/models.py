@@ -15,6 +15,7 @@ class Status(enum.Enum):
     IN_PROGRESS = "В процессе"
     COMPLETED = "Выполнен"
     CANCELLED = "Отменен"
+    REPAIR_IS_NOT_POSSIBLE = "Ремонт невозможен"
 
 
 class Client(Base):

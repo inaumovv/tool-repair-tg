@@ -1,9 +1,10 @@
 from datetime import datetime
+from json import tool
 
 from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 
 from services.redis import AsyncRedis
 from telegram_bot.helpers.keyboard import Keyboard
@@ -46,11 +47,48 @@ async def get_order_id(
         await session.commit()
 
     if order:
-        await message.answer('Выберите статус', reply_markup=keyboard.statuses_keyboard())
-        await state.set_state(ChangeOrderStatusStates.status)
-        await state.update_data(order_id=order.id, status=order.status.value)
+        if order.status.value != 'Завершен' and order.status.value != 'Отменен' and order.status.value != 'Ремонт невозможен':
+            await message.answer('Выберите статус', reply_markup=keyboard.statuses_keyboard(order.status.value))
+            await state.set_state(ChangeOrderStatusStates.status)
+            await state.update_data(order_id=order.id, status=order.status.value)
+        else:
+            await message.answer(f'Статус ремонта "{order.status.value}" невозможно изменить',
+                                 reply_markup=keyboard.main_keyboard())
     else:
         await message.answer('Ремонта с таким номером не существует')
+
+
+@router.message(ChangeOrderStatusStates.status, F.text == 'Ремонт невозможен')
+async def set_repair_is_not_possible(
+        message: Message,
+        state: FSMContext,
+        keyboard: Keyboard = Keyboard,
+        repo: OrderRepository = OrderRepository,
+        message_sender: WhatsAppMessageSender = WhatsAppMessageSender
+):
+    data: dict = await state.get_data()
+    order_id: int = data.get('order_id')
+
+    async with async_session_maker() as session:
+        await repo.update(session, Order.id == order_id, obj_in={'status': Status.REPAIR_IS_NOT_POSSIBLE})
+        order: Order = await repo.get_one_or_none(
+            session, options=(joinedload(Order.client), selectinload(Order.tools)), id=order_id
+        )
+        await session.commit()
+
+    tools_string = ", ".join([str_tool.name for str_tool in order.tools])
+
+    await message_sender.send_message(
+        order.client.phone,
+        f'Уважаемый {order.client.name},\n'
+        f'диагностика вашего инструмента завершена.\n'
+        f'К сожалению, инструменты {tools_string} (заявка №{order_id}) не подлежат ремонту.'
+        f'Вы можете забрать его в сервисном центре в удобное для вас время.'
+    )
+
+    await state.clear()
+    await message.answer('Статус ремонта изменен на "Ремонт невозможен" и уведомили об этом клиента',
+                         reply_markup=keyboard.main_keyboard())
 
 
 @router.message(ChangeOrderStatusStates.status, F.text == 'Диагностика')
@@ -202,5 +240,3 @@ async def set_completed_status(
 
     await state.clear()
     await message.answer('Статус ремонта изменен на "Завершен"', reply_markup=keyboard.main_keyboard())
-
-
