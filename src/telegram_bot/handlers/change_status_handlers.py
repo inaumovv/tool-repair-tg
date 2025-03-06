@@ -47,7 +47,7 @@ async def get_order_id(
         await session.commit()
 
     if order:
-        if order.status.value != 'Завершен' and order.status.value != 'Отменен' and order.status.value != 'Ремонт невозможен':
+        if order.status.value != 'Выполнен' and order.status.value != 'Отменен' and order.status.value != 'Ремонт невозможен':
             await message.answer('Выберите статус', reply_markup=keyboard.statuses_keyboard(order.status.value))
             await state.set_state(ChangeOrderStatusStates.status)
             await state.update_data(order_id=order.id, status=order.status.value)

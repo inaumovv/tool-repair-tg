@@ -30,7 +30,7 @@ def upgrade() -> None:
     )
     op.create_table('order',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('status', sa.Enum('IN_QUEUE', 'DIAGNOSTICS', 'DIAGNOSTICS_COMPLETED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED', name='status'), nullable=False),
+    sa.Column('status', sa.Enum('IN_QUEUE', 'DIAGNOSTICS', 'DIAGNOSTICS_COMPLETED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED', 'REPAIR_IS_NOT_POSSIBLE', name='status'), nullable=False),
     sa.Column('price', sa.Integer(), nullable=True),
     sa.Column('deadline', sa.DateTime(), nullable=True),
     sa.Column('client_id', sa.Integer(), nullable=False),

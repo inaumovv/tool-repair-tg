@@ -14,4 +14,6 @@ RUN pip install -r requirements.txt
 COPY . /usr/src/tool-repair-tg/
 WORKDIR /usr/src/tool-repair-tg/src/
 
+RUN chmod +x /usr/src/tool-repair-tg/entrypoint.sh
+
 ENTRYPOINT ["/usr/src/tool-repair-tg/entrypoint.sh"]
