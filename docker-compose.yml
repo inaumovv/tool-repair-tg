@@ -10,9 +10,11 @@ services:
     depends_on:
       - redis
       - postgres
-      - mongo
     links:
       - redis
+      - postgres
+    volumes:
+      - tool_images_volume:/usr/src/tool-repair-tg/src/tool_images/
 
   whatsapp-bot:
     container_name: whatsapp_bot_container
@@ -23,12 +25,10 @@ services:
       - postgres
       - redis
       - telegram-bot
-      - mongo
     links:
       - postgres
       - redis
       - telegram-bot
-      - mongo
 
 
   redis:
@@ -61,18 +61,7 @@ services:
     volumes:
       - postgres_volume:/var/lib/postgresql/data/
 
-  mongo:
-    container_name: mongo_container
-    image: mongo:latest
-    restart: always
-    env_file:
-      - .env
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongo_volume:/data/db
-
 volumes:
   redis_volume:
   postgres_volume:
-  mongo_volume:
+  tool_images_volume:

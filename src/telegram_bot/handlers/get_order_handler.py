@@ -1,17 +1,16 @@
-from io import BytesIO
+import os
 
 from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message, InputMediaPhoto, InputFile, BufferedInputFile
+from aiogram.types import Message, InputMediaPhoto, FSInputFile
 from sqlalchemy.orm import selectinload, joinedload
 
-from telegram_bot.bot import bot
-from telegram_bot.helpers.keyboard import Keyboard
-from telegram_bot.helpers.states import GetOrderStates
 from database import async_session_maker
 from models import Order
 from repositories.order_repository import OrderRepository
-from services.mongo import MongoDB
+from telegram_bot.bot import bot
+from telegram_bot.helpers.keyboard import Keyboard
+from telegram_bot.helpers.states import GetOrderStates
 from telegram_bot.helpers.validators import validate_order_id
 
 router: Router = Router()
@@ -29,7 +28,6 @@ async def return_order(
         state: FSMContext,
         keyboard: Keyboard = Keyboard,
         order_repo: OrderRepository = OrderRepository,
-        mongo: MongoDB = MongoDB
 ):
     images: list = []
     try:
@@ -53,8 +51,9 @@ async def return_order(
                         f'{order.client.phone}\n\n'
                         f'Инструменты:\n')
         for tool in order.tools:
+            image_path = os.path.join('tool_images', f'{tool.id}.jpg')
             image: InputMediaPhoto = InputMediaPhoto(
-                media=BufferedInputFile(await mongo.get('images', tool.id), tool.name)
+                media=FSInputFile(image_path)
             )
             images.append(image)
             caption += f'- {tool.name}\n'

@@ -14,10 +14,6 @@ class Settings(BaseSettings):
     POSTGRES_HOST: str
     POSTGRES_PORT: int
 
-    MONGO_HOST: str
-    MONGO_PORT: int
-    MONGO_DATABASE: str
-
     REDIS_HOST: str
     REDIS_PORT: int
 
@@ -36,9 +32,6 @@ class Settings(BaseSettings):
     @property
     def POSTGRES_URL_SYNC(self):
         return f"postgresql+psycopg2://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
-    @property
-    def MONGO_URL(self):
-        return f'mongodb://{self.MONGO_HOST}:{self.MONGO_PORT}/'
 
     @property
     def REDIS_URL(self):

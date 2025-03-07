@@ -1,18 +1,18 @@
-from io import BytesIO
+import os
 
+import aiofiles
 from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, PhotoSize
 
-from telegram_bot.bot import bot
-from telegram_bot.helpers.keyboard import Keyboard
-from telegram_bot.helpers.states import AddOrderStates
 from database import async_session_maker
 from models import Status, Client, Order, Tool
 from repositories.client_repository import ClientRepository
 from repositories.order_repository import OrderRepository
 from repositories.tool_repository import ToolRepository
-from services.mongo import MongoDB
+from telegram_bot.bot import bot
+from telegram_bot.helpers.keyboard import Keyboard
+from telegram_bot.helpers.states import AddOrderStates
 from telegram_bot.helpers.validators import validate_phone, validate_name
 
 router: Router = Router()
@@ -91,7 +91,6 @@ async def get_phone_number(
         client_repo: ClientRepository = ClientRepository,
         order_repo: OrderRepository = OrderRepository,
         tool_repo: ToolRepository = ToolRepository,
-        mongo: MongoDB = MongoDB
 ):
     data: dict = await state.get_data()
 
@@ -112,7 +111,7 @@ async def get_phone_number(
             order: Order = await order_repo.add(session, {'status': Status.IN_QUEUE, 'client_id': client.id})
 
         for tool in data['tools']:
-            image_bytes: BytesIO = await bot.download(tool['image'])
+
             db_tool: Tool = await tool_repo.add(
                 session,
                 {
@@ -120,7 +119,12 @@ async def get_phone_number(
                     'order_id': order.id
                 }
             )
-            await mongo.add('images', image_bytes.getvalue(), db_tool.id)
+            image = await bot.download(tool['image'])
+            save_path = os.path.join('tool_images', f'{db_tool.id}.jpg')
+
+            async with aiofiles.open(save_path, "wb") as new_file:
+                await new_file.write(image.read())
+
             await session.commit()
 
         await state.clear()
