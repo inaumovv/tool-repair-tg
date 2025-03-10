@@ -11,6 +11,7 @@ from telegram_bot.handlers.add_order_handlers import router as add_order_router
 from telegram_bot.handlers.get_order_handler import router as get_order_router
 from telegram_bot.handlers.start_handler import router as start_router
 from telegram_bot.handlers.change_status_handlers import router as change_status_router
+from telegram_bot.handlers.complete_order_handlers import router as complete_order_router
 
 dispatcher: Dispatcher = Dispatcher(storage=RedisStorage(redis.from_url(settings.REDIS_URL)))
 logging.basicConfig(level=logging.INFO)
@@ -24,6 +25,7 @@ async def _register_routers() -> None:
         get_order_router,
         add_order_router,
         change_status_router,
+        complete_order_router
     )
 
 

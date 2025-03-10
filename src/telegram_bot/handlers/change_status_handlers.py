@@ -47,15 +47,16 @@ async def get_order_id(
         await session.commit()
 
     if order:
-        if order.status.value != 'Выполнен' and order.status.value != 'Отменен' and order.status.value != 'Ремонт невозможен':
+        forbidden_statuses = ('Завершен', 'Отменен', 'Ремонт невозможен', 'Выдан')
+        if order.status.value not in forbidden_statuses:
             await message.answer('Выберите статус', reply_markup=keyboard.statuses_keyboard(order.status.value))
             await state.set_state(ChangeOrderStatusStates.status)
             await state.update_data(order_id=order.id, status=order.status.value)
         else:
             await message.answer(f'Статус ремонта "{order.status.value}" невозможно изменить',
-                                 reply_markup=keyboard.main_keyboard())
+                                 reply_markup=keyboard.cancel_keyboard())
     else:
-        await message.answer('Ремонта с таким номером не существует')
+        await message.answer('Ремонта с таким номером не существует', reply_markup=keyboard.cancel_keyboard())
 
 
 @router.message(ChangeOrderStatusStates.status, F.text == 'Ремонт невозможен')
@@ -78,7 +79,7 @@ async def set_repair_is_not_possible(
 
     tools_string = ", ".join([str_tool.name for str_tool in order.tools])
 
-    await message_sender.send_message(
+    await message_sender.async_send_message(
         order.client.phone,
         f'Уважаемый {order.client.name},\n'
         f'диагностика вашего инструмента завершена.\n'
@@ -183,7 +184,7 @@ async def get_order_deadline(
                          f'Срок сдачи: {message.text}\n\n'
                          f'Отправьте в ответном сообщении "+", если согласны на условия ремонта, '
                          f'"-" если нет.')
-    await message_sender.send_message(order.client.phone, message_text)
+    await message_sender.async_send_message(order.client.phone, message_text)
 
     await message.answer(
         'Данные успешно сохранены и отправлены клиенту для подтверждения.\n'
@@ -223,19 +224,21 @@ async def set_completed_status(
     order_id: int = data.get('order_id')
 
     async with async_session_maker() as session:
-        await repo.update(session, Order.id == order_id, obj_in={'status': Status.COMPLETED})
+        await repo.update(
+            session,
+            Order.id == order_id,
+            obj_in={'status': Status.COMPLETED, 'last_notif_at': datetime.utcnow(), 'completed_at': datetime.utcnow()}
+        )
         order: Order = await repo.get_one_or_none(session, options=joinedload(Order.client), id=order_id)
         await session.commit()
 
-    await message_sender.send_message(
+    await message_sender.async_send_message(
         order.client.phone,
-        f'Уважаемый {order.client.name},\n'
+        f'Уважаемый, {order.client.name}\n'
         f'ремонт вашего инструмента успешно завершен.\n'
         f'Номер ремонта: {order.id}\n'
-        f'Сроки хранения: до \n\n'
-        f'Если вас не затруднит, оставьте, пожалуйста, отзыв о предоставленной услуге в 2gis,\n'
-        f'это поможет нам улучшить сервис и предоставлять наилучшие услуги для вас!\n'
-        f'https://2gis.kz/almaty/firm/70000001067099421\n\n'
+        f'Срок бесплатного хранения: 7 дней с момента завершения, далее 100тг в сутки\n'
+        f'Можете забрать в удобное для вас время с 08:00 до 20:00'
     )
 
     await state.clear()

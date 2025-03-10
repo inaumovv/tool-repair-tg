@@ -1,4 +1,6 @@
 import os
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
@@ -6,7 +8,7 @@ from aiogram.types import Message, InputMediaPhoto, FSInputFile
 from sqlalchemy.orm import selectinload, joinedload
 
 from database import async_session_maker
-from models import Order
+from models import Order, Status
 from repositories.order_repository import OrderRepository
 from telegram_bot.bot import bot
 from telegram_bot.helpers.keyboard import Keyboard
@@ -43,10 +45,32 @@ async def return_order(
         await session.commit()
 
     if order:
+        kazakh_timezone = ZoneInfo("Asia/Almaty")
+        kazakh_time = order.created_at.astimezone(kazakh_timezone)
+        formatted_time = kazakh_time.strftime("%d-%m-%Y %H:%M")
+
+        if order.status == Status.COMPLETED:
+            stored_days = (datetime.utcnow() - order.completed_at).days
+            if stored_days > 7:
+                price_of_store = 100 * (stored_days - 7)
+            else:
+                price_of_store = 0
+
+        elif order.status == Status.ISSUED:
+            stored_days = (order.issued_at - order.completed_at).days
+            price_of_store = 100 * stored_days
+
+        else:
+            price_of_store = 0
+            stored_days = 0
+
         caption: str = (f'Номер ремонта: {order.id}\n'
-                        f'Цена: {order.price}\n'
+                        f'Время создания ремонта: {formatted_time}\n'
+                        f'Цена: {order.price}₸\n'
                         f'Срок сдачи: {order.deadline}\n'
-                        f'Статус: {order.status.value}\n\n'
+                        f'Статус: {order.status.value}\n'
+                        f'Дней хранения: {stored_days}\n'
+                        f'Цена за хранение: {price_of_store}₸\n\n'
                         f'Клиент:\n{order.client.name}\n'
                         f'{order.client.phone}\n\n'
                         f'Инструменты:\n')
@@ -64,4 +88,3 @@ async def return_order(
 
     else:
         await message.reply('Ремонта с таким номером не найдено')
-

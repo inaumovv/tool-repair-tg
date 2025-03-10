@@ -9,7 +9,7 @@ from telegram_bot.bot import bot
 class WhatsAppMessageSender:
 
     @classmethod
-    async def send_message(cls, number: str, message: str):
+    async def async_send_message(cls, number: str, message: str):
         url: str = f'{settings.WHATSAPP_API_URL}/waInstance{settings.ID_INSTANCE}/sendMessage/{settings.API_TOKEN_INSTANCE}'
         params: dict = {
             'chatId': f'{number}@c.us',
@@ -21,6 +21,19 @@ class WhatsAppMessageSender:
                     return await response.text()
                 else:
                     return None
+
+    @classmethod
+    def sync_send_message(cls, number: str, message: str):
+        url: str = f'{settings.WHATSAPP_API_URL}/waInstance{settings.ID_INSTANCE}/sendMessage/{settings.API_TOKEN_INSTANCE}'
+        params: dict = {
+            'chatId': f'{number}@c.us',
+            'message': message
+        }
+        response = requests.post(url, json=params)
+        if response.status_code == 200:
+            return response.json()
+        else:
+            return None
 
 
 class TelegramMessageSender:

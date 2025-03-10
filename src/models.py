@@ -13,7 +13,8 @@ class Status(enum.Enum):
     DIAGNOSTICS = "Диагностика"
     DIAGNOSTICS_COMPLETED = "Диагностика закончена"
     IN_PROGRESS = "В процессе"
-    COMPLETED = "Выполнен"
+    COMPLETED = "Завершен"
+    ISSUED = "Выдан"
     CANCELLED = "Отменен"
     REPAIR_IS_NOT_POSSIBLE = "Ремонт невозможен"
 
@@ -39,6 +40,9 @@ class Order(Base):
     client_id: Mapped[int] = MappedColumn(ForeignKey('client.id'))
     client: Mapped['Client'] = relationship(back_populates='orders')
     tools: Mapped[List['Tool']] = relationship(back_populates='order')
+    completed_at: Mapped[Optional[datetime]] = MappedColumn(default=None)
+    issued_at: Mapped[Optional[datetime]] = MappedColumn(default=None)
+    last_notif_at: Mapped[Optional[datetime]] = MappedColumn(default=None)
     created_at: Mapped[datetime] = MappedColumn(server_default=text("TIMEZONE('utc', now())"))
     updated_at: Mapped[datetime] = MappedColumn(server_default=text("TIMEZONE('utc', now())"), onupdate=datetime.utcnow)
 

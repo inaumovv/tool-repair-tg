@@ -51,7 +51,8 @@ def cancellation_order(notification: Notification, redis: SyncRedis = SyncRedis)
 
         notification.answer(
             'Ремонт успешно отменен.\n'
-            'Сроки хранения'
+            'Сроки хранения: 7 дней бесплатно, далее 100тг в день.\n'
+            'Вы можете забрать свой инструмент ежедневно с 8:00 до 20:00'
         )
 
         redis.delete(key)
@@ -64,10 +65,9 @@ def send_confirm_message(
         order_id: int,
         message_sender: TelegramMessageSender = TelegramMessageSender
 ):
-    session = sync_session_maker()
-    session.execute(update(Order).where(Order.id == order_id).values({'status': Status.IN_PROGRESS}))
-    session.commit()
-    session.close()
+    with sync_session_maker() as session:
+        session.execute(update(Order).where(Order.id == order_id).values({'status': Status.IN_PROGRESS}))
+        session.commit()
 
     message_sender.send_message(
         chat_id=chat_id,
@@ -81,10 +81,9 @@ def send_cancel_message(
         order_id: int,
         message_sender: TelegramMessageSender = TelegramMessageSender
 ):
-    session = sync_session_maker()
-    session.execute(update(Order).where(Order.id == order_id).values({'status': Status.CANCELLED}))
-    session.commit()
-    session.close()
+    with sync_session_maker() as session:
+        session.execute(update(Order).where(Order.id == order_id).values({'status': Status.CANCELLED}))
+        session.commit()
 
     message_sender.send_message(
         chat_id=chat_id,

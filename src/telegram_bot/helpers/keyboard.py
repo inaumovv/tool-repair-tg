@@ -1,4 +1,4 @@
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
 
 class Keyboard:
@@ -8,7 +8,7 @@ class Keyboard:
         return ReplyKeyboardMarkup(
             resize_keyboard=True,
             keyboard=[
-                [KeyboardButton(text='Найти ремонт')],
+                [KeyboardButton(text='Найти ремонт'), KeyboardButton(text='Выдать инструмент')],
                 [KeyboardButton(text='Сменить статус ремонта'), KeyboardButton(text='Новый ремонт')],
             ]
         )

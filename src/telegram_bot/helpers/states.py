@@ -13,6 +13,10 @@ class GetOrderStates(StatesGroup):
     order_id: State = State()
 
 
+class GiveOrderStates(StatesGroup):
+    order_id: State = State()
+
+
 class ChangeOrderStatusStates(StatesGroup):
     id: State = State()
     status: State = State()
