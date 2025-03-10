@@ -40,28 +40,23 @@ async def get_order_id(
         order: Order = await repo.get_one_or_none(session=session, options=joinedload(Order.client), id=order_id)
 
         if order:
-            if order.status == Status.COMPLETED:
-                await repo.update(
-                    session,
-                    Order.id == order_id,
-                    obj_in={'status': Status.ISSUED, 'issued_at': datetime.now()})
-                await message.answer('Инструмент выдан', reply_markup=keyboard.main_keyboard())
+            await repo.update(
+                session,
+                Order.id == order_id,
+                obj_in={'status': Status.ISSUED, 'issued_at': datetime.now()})
+            await message.answer('Инструмент выдан', reply_markup=keyboard.main_keyboard())
 
-                await message_sender.async_send_message(
-                    order.client.phone,
-                    f'Уважаемый {order.client.name}, спасибо, что воспользовались нашими услугами.\n'
-                    f'Если вас не затруднит, оставьте, пожалуйста, отзыв о предоставленной услуге в 2gis,\n'
-                    f'это поможет нам улучшить сервис и предоставлять наилучшие услуги для вас!\n'
-                    f'https://2gis.kz/almaty/firm/70000001067099421'
-                )
+            await message_sender.async_send_message(
+                order.client.phone,
+                f'Уважаемый {order.client.name}, спасибо, что воспользовались нашими услугами.\n'
+                f'Если вас не затруднит, оставьте, пожалуйста, отзыв о предоставленной услуге в 2gis,\n'
+                f'это поможет нам улучшить сервис и предоставлять наилучшие услуги для вас!\n'
+                f'https://2gis.kz/almaty/firm/70000001067099421'
+            )
 
-                await state.clear()
-
-            else:
-                await message.answer('Чтобы выдать инструменты статус его ремонта должен быть "Завершен"')
+            await state.clear()
 
         else:
             await message.answer('Ремонта с таким номером не существует')
 
         await session.commit()
-

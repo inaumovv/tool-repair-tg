@@ -1,4 +1,5 @@
 import os
+from zoneinfo import ZoneInfo
 
 import aiofiles
 from aiogram import Router, F
@@ -10,6 +11,7 @@ from models import Status, Client, Order, Tool
 from repositories.client_repository import ClientRepository
 from repositories.order_repository import OrderRepository
 from repositories.tool_repository import ToolRepository
+from services.message_sender import WhatsAppMessageSender
 from telegram_bot.bot import bot
 from telegram_bot.helpers.keyboard import Keyboard
 from telegram_bot.helpers.states import AddOrderStates
@@ -91,6 +93,7 @@ async def get_phone_number(
         client_repo: ClientRepository = ClientRepository,
         order_repo: OrderRepository = OrderRepository,
         tool_repo: ToolRepository = ToolRepository,
+        message_sender: WhatsAppMessageSender = WhatsAppMessageSender
 ):
     data: dict = await state.get_data()
 
@@ -128,4 +131,27 @@ async def get_phone_number(
             await session.commit()
 
         await state.clear()
+
+        client_name: str = data['client']['name']
+
+        kazakh_timezone = ZoneInfo("Asia/Almaty")
+        kazakh_time = order.created_at.astimezone(kazakh_timezone)
+        formatted_time = kazakh_time.strftime("%d-%m-%Y %H:%M")
+
+        tools_string = ''
+        for tool in data['tools']:
+            tool_name = tool['name']
+            tools_string += f'- {tool_name}\n'
+
+        await message_sender.async_send_message(
+            number=phone,
+            message=f'Уважаемый {client_name}, ваш инструмент успешно принят на ремонт:\n'
+                    f'{tools_string}'
+                    f'Дата принятия на ремонт: {formatted_time}\n' 
+                    f'Номер ремонта: {order.id}\n'
+                    f'Ориентировочное время ремонта: 3 дня с момента принятия.\n' 
+                    f'Мы будем уведомлять вас о статусе вашего ремонта.\n' 
+                    f'Для получения подробной информации обращайтесь по номеру +77001022025'
+        )
+
         await message.answer(f'Создан ремонт №{order.id}', reply_markup=keyboard.main_keyboard())

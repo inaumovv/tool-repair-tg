@@ -57,8 +57,12 @@ async def return_order(
                 price_of_store = 0
 
         elif order.status == Status.ISSUED:
-            stored_days = (order.issued_at - order.completed_at).days
-            price_of_store = 100 * stored_days
+            if order.completed_at:
+                stored_days = (order.issued_at - order.completed_at).days
+                price_of_store = 100 * stored_days
+            else:
+                stored_days = 0
+                price_of_store = 0
 
         else:
             price_of_store = 0
