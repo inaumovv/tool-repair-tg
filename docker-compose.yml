@@ -62,7 +62,7 @@ services:
       - postgres_volume:/var/lib/postgresql/data/
 
   celery-worker:
-    container_name: celery_worker_container
+    container_name: celery_worker_container_tool_repair
     build: .
     command: celery -A tasks.celery_app:celery_app worker -E -l info
     restart: always
@@ -72,7 +72,7 @@ services:
       - redis
 
   celery-beat:
-    container_name: celery_beat_container
+    container_name: celery_beat_container_tool_repair
     build: .
     command: celery -A tasks.celery_app:celery_app beat -l info
     restart: always
